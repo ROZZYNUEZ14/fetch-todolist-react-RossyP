@@ -1,4 +1,10 @@
+.delete-btn{
+    color: rgb(255, 255, 255);
+ }
 
+.delete-btn:hover{
+   color: red;
+}
 /* 
 
     You can write your own styles here...
