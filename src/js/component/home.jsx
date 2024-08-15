@@ -11,10 +11,29 @@ const Home = () => {
 	const [isHoverRed, setIsHoverRed] = useState(false)
 	const [dataTasks, setDataTasks] = useState([])
 
+
+
+	console.log(dataTasks)
+
+	function obtenerHistorialTareas() {
+		fetch(`https://playground.4geeks.com/todo/todos/RossyP`, {
+		  method: "POST",
+		  headers: {
+			"Content-Type": "application/json"
+		  },
+		  body: JSON.stringify({}) 
+		})
+		  .then((response) => response.json())
+		  .then((data) => {
+			console.log("Tareas recibidas:", data);
+			setDataTasks(currentData => [...currentData, data]); 
+		  })
+		  .catch((error) => console.log("Error al obtener el historial de tareas:", error));
+	}
+	
 	function addTask(e){
 		if(e.key === 'Enter'){
-			obtenerTareas(newInput)
-			// console.log(obtenerTareas("prueba"))
+			crearTareas(newInput)
 			// setTasks([...tasks, newInput])
 			//setTasks(currentTasks => currentTasks.concat(newInput))
 			// setTasks(tasks.concat(newInput))
@@ -22,10 +41,20 @@ const Home = () => {
 		}
 	}
 
-	function deleteButton(index) {
-		//setTasks(currentTasks => currentTasks.filter((task, i) => i !== index));
-		setDataTasks(currentTasks => currentTasks.filter((task, i) => i !== index));
+	function deleteButton(id) {
 
+		fetch(`https://playground.4geeks.com/todo/todos/${id}`,{
+			method: "DELETE",
+			headers: {
+				"Content-Type": "application/json"
+			},
+		})
+		.then((response) => response.json())
+		.then((data) => {
+			console.log(data);
+			setDataTasks(currentTasks => currentTasks.filter((task) => task.id !== id))
+		})
+		.catch((error) => console.log(error))
 	}
 
 	
@@ -39,11 +68,13 @@ const Home = () => {
 			
 		})
 		.then((response) => response.json())
-		.then((data) => console.log(data))
-		.catch((error) => console.log(error))
+		.then((data) => {
+			console.log("Usuario creado:", data);
+			obtenerHistorialTareas();
+		})
 	}
 
-	function obtenerTareas(nuevaTarea){
+	function crearTareas(nuevaTarea){
 		fetch(`https://playground.4geeks.com/todo/todos/RossyP`,{
 			method: "POST",
 			headers: {
@@ -58,20 +89,23 @@ const Home = () => {
 		.then((data) =>{
 			// setDataTasks(currentData => [...currentData, data]);
 			setDataTasks(currentData => currentData.concat(data));
+			setIdTarea(data.id)
+			setActualTarea(data.label)
 			console.log(data)
 			
 		})
 		.catch((error) => console.log(error))
 	}
 
+
+	
+
 	useEffect(()=>{
-		
-		
 		creandoUsuario()
+		obtenerHistorialTareas()
 	}, [])
 	
-	// console.log(obtenerTareas(newInput))
-	// console.log(dataTasks)
+	
 	return (
 		<div className="d-flex justify-content-center align-items-center min-vh-100">
 			<div className="mx-auto w-100 bg-transparent d-flex flex-column p-5 justify-content-center align-items-center ">
@@ -87,8 +121,8 @@ const Home = () => {
 						{dataTasks.length === 0 ? (
       						<li className="text-center w-100 fw-lighter fs-3 fst-italic " style={{color:"purple"}}>No hay tareas, añadir tareas</li>
     					) : (
-							dataTasks.map((task) => (task !== "" && (
-								<li key={task.id} className="border-bottom p-2 px-5 py-3 text-start d-flex justify-content-between align-items-center fw-lighter fs-3 fst-italic">
+							dataTasks.map((task, index) => (task !== "" && (
+								<li key={task.id } className="border-bottom p-2 px-5 py-3 text-start d-flex justify-content-between align-items-center fw-lighter fs-3 fst-italic">
 									<span>{task.label}</span>
 									<FontAwesomeIcon className="delete-btn" icon={faX} onClick={() => deleteButton(task.id)}/>
 								</li>
