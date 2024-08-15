@@ -1,217 +1,143 @@
-import React, { useState, useEffect } from "react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faX } from '@fortawesome/free-solid-svg-icons';
-import { faPen } from '@fortawesome/free-solid-svg-icons';
-import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
-
-// import "../../styles/index.css"
+import React, {useState, useEffect} from "react";
 
 
-const Home = () => {
 
-	const [newInput, setNewInput] = useState("");
-	const [isHover, setIsHover] = useState(null)
-	const [isInput, setIsInput] = useState(false)
-	const [dataTasks, setDataTasks] = useState([])
-	const [editId, setEditId] = useState()
-	const [editLabel, setEditLabel] = useState()
+const Home = () =>{
 
+	const [nameValue, setNameValue] = useState("")
+	const [usersList, setUsersList] = useState([])
+	const [switchGetList, setSwitchGetList] = useState(false)
+	const [tasksList, setTasksList] = useState([])
+	const [task, setTask] = useState("")
 
-	function obtenerHistorialTareas() {
-		fetch(`https://playground.4geeks.com/todo/users/RossyP`, {
-		  method: "GET",
-		  headers: {
-			"Content-Type": "application/json"
-		  },
+	const createUser = () => {
+		if(nameValue === ""){
+			return
+		}
+
+		fetch(`https://playground.4geeks.com/todo/users/${nameValue}`,{
+			method: "POST",
 		})
-		  .then((response) =>{
-			if(response.status === 404){
-				creandoUsuario()
+		.then((response) => response.json())
+		.then((data) => {
+			if(data.name){
+				setSwitchGetList(prev => !prev)
+				setNameValue("")
 			}
-			console.log(response)
-			 return response.json()
-			})
-		  .then((data) => {
-			console.log(data.todos);
-			// setDataTasks(currentData => [...currentData, data.todos]); 
-			setDataTasks(currentData => currentData.concat(data.todos))
-		  })
-		  .catch((error) => console.log(error));
+		})
+
 	}
-	
-	function addTask(e){
-		if(e.key === 'Enter' || e.type === 'click'){
-			if(editId){
-				editarTareas(editId, editLabel)
-			}else{
-				crearTareas(newInput)
+
+	const deleteUser = () => {
+		fetch(`https://playground.4geeks.com/todo/users/${nameValue}`,{
+			method: "DELETE",
+		})
+		.then((response) =>{
+			if(response.ok){
+				setSwitchGetList(prev => !prev)
+				setNameValue("")
 			}
-			
-			
-			e.target.value = "";
+		})
+		
+	}
+
+	const getTasksListFromUser = () => {
+		fetch(`https://playground.4geeks.com/todo/users/${nameValue}`)
+		.then((response) => response.json())
+		.then((data) => {
+			setTasksList(data.todos)
+		})
+	}
+
+	
+
+	const getUsersList = () => {
+		fetch("https://playground.4geeks.com/todo/users")
+		.then((response) => response.json())
+		.then((data) => {
+			setUsersList(data.users)
+		})
+	}
+
+	const createNewTask = (e) => {
+		if(e.key === "Enter"){
+			fetch(`https://playground.4geeks.com/todo/todos/${nameValue}`,{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+						"label": task,
+						"is_done": false
+				})
+			})
+			.then((response) => response.json())
+			.then((data) => {
+				if(data.label){
+					setTasksList([...tasksList, data])
+					setTask("")
+				}
+			})
+		}else{
+			return
 		}
 	}
 
-	function deleteButton(id) {
-
+	const deleteTask = (id) => {
 		fetch(`https://playground.4geeks.com/todo/todos/${id}`,{
 			method: "DELETE",
-			headers: {
-				"Content-Type": "application/json"
-			},
 		})
-		.then((response) => response.json())
-		.then((data) => {
-			console.log(data);
-			setDataTasks(currentTasks => currentTasks.filter((task) => task.id !== id))
+		.then((response) =>{
+			console.log(response)
+			if(response.ok){
+				let listaFiltrada = tasksList.filter((item)=>item.id !== id)
+				setTasksList(listaFiltrada)
+			}
 		})
-		.catch((error) => console.log(error))
+		
 	}
-
-	
-
-	function creandoUsuario(){
-		fetch(`https://playground.4geeks.com/todo/users/RossyP`,{
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json"
-			},
-			
-		})
-		.then((response) => response.json())
-		.then((data) => {
-			console.log(data);
-			obtenerHistorialTareas();
-		})
-	}
-
-	function crearTareas(nuevaTarea){
-		fetch(`https://playground.4geeks.com/todo/todos/RossyP`,{
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json"
-			},
-			body: JSON.stringify({
-				"label": nuevaTarea,
-				"is_done": false
-			  })
-		})
-		.then((response) => response.json())
-		.then((data) =>{
-			// setDataTasks(currentData => [...currentData, data]);
-			setDataTasks(currentData => currentData.concat(data));
-			console.log(data)
-			
-		})
-		.catch((error) => console.log(error))
-	}
-
-	function editarTareas(id, label){
-		fetch(`https://playground.4geeks.com/todo/todos/${id}`,{
-			method: "PUT",
-			headers: {
-				"Content-Type": "application/json"
-			},
-			body: JSON.stringify({
-				"label": label,
-				"is_done": true
-			})
-		})
-		.then((response) => response.json())
-		.then((data) =>{
-			setDataTasks(currentData => 
-				currentData.map(task => 
-					task.id === id ? { ...task, label: data.label, is_done: data.is_done } : task
-				)
-			);
-			console.log(data)
-		})
-		.catch((error) => console.log(error))
-	}
-	
 
 	useEffect(()=>{
-		//creandoUsuario()
-		obtenerHistorialTareas()
-	}, [])
-	
-	function handleClickEdit(id, label) {
-		setEditId(id)
-		setEditLabel(label)
-	}
+		getUsersList()
+	}, [switchGetList])
 
-	console.log(editId)
-	console.log(editLabel)
+	return(
+		<div>
+			<h1>Todo List</h1>
+			<input onChange={(e) => setNameValue(e.target.value)} value={nameValue}></input>
+			<button onClick={createUser}>Crear usuario</button>
+			<button onClick={deleteUser}>Eliminar usuario</button>
+			<button onClick={getTasksListFromUser}>Obtener lista</button>
 
-	function handleChangeEdit(e){
-		setEditLabel(e.target.value)
-	}
+			<h4>Lista de Usuarios</h4>
+			{
+				usersList.map((item, index)=>{
+					return (
+						<div key={index}>
+							<label>{item.name}</label>
+						</div>
+					)
+				})
+			}
 
-	function handleMouseEnter(id) {
-		setIsHover(id)
-	}
+			<h4>Lista de tareas de {nameValue}</h4>
+			<input onChange={(e)=> setTask(e.target.value)} value={task} onKeyDown={createNewTask}></input>
+			<ul>
 
-	function handleMouseLeave() {
-		setIsHover(null)
-	}
-
-	function handleBlur() {
-		setEditId(null)
-		setEditLabel('')
-	  }
-	function handleMouseLeaveInput(){
-		setIsInput(false)
-	}
-	
-	function handleMouseEnterInput(){
-		setIsInput(true)
-	}
-	return (
-		<div className="d-flex justify-content-center align-items-center min-vh-100">
-			<div className="mx-auto w-100 bg-transparent d-flex flex-column p-5 justify-content-center align-items-center ">
-				<div>
-					<h1 className="fw-lighter fst-italic" style={{ fontSize:"100px", color: "#8038b1"}}>ToDo</h1>
-				</div>
-				<div className="w-50 bg-white rounded-3" style={{boxShadow: "5px 10px 10px gray"}}>
-					<div className="w-100 p-2 px-5 py-3">
-						<input className="w-100 border-0 fw-lighter fs-3 fst-italic" style={{outline:"none", color:"#bc7bed"}} type="text" name="" id="" placeholder="Ingresa nueva tarea" onChange={(e)=>setNewInput(e.target.value)} onKeyDown={addTask}/>
-					</div>
-					<div className="w-100 border m-0 p-0">
-						<ul className="list-unstyled w-100 m-0 p-0">
-						{dataTasks.length === 0 ? (
-      						<li className="text-center w-100 fw-lighter fs-3 fst-italic " style={{color:"purple"}}>No hay tareas, añadir tareas</li>
-    					) : (
-							dataTasks.map((task, index) => (task !== "" && (
-								<li key={task.id } className="border-bottom p-2 px-5 py-3 text-start d-flex justify-content-between align-items-center fw-lighter fs-3 fst-italic" style={{backgroundColor: isHover === task.id ? 'pink' : 'white',}} onMouseEnter={()=>handleMouseEnter(task.id)} onMouseLeave={handleMouseLeave}>
-									{editId === task.id || isInput === true ?(
-											<input value={editLabel} onChange={handleChangeEdit} onKeyDown={addTask} onBlur={handleBlur}></input> 
-										):(
-											<span>{task.label}</span>
-										)
-									}
-									
-									
-									<div className="d-flex flex-row gap-2 justify-content-center align-items-center">
-										<FontAwesomeIcon icon={faFloppyDisk} style={{color: isInput !== null  ? "yellow": "blue"}} onClick={addTask} onMouseEnter={()=>handleMouseEnter(task.id)} onMouseLeave={handleMouseLeaveInput} />	
-										<FontAwesomeIcon className="edit-btn" style={{fontSize: "23px", color: isHover === task.id ? "#575458" : "white"}} icon={faPen} onClick={() => handleClickEdit(task.id, task.label)} />
-										<FontAwesomeIcon className="delete-btn" style={{color: isHover === task.id ? 'red' : 'white',}}  icon={faX} onClick={() => deleteButton(task.id)} />
-										
-									</div>
-								</li>
-								)
-							))
-							)}
-						</ul>
-					</div>
-					<div className="w-100 p-3  pb-1">
-						<p className="fw-light fst-italic" style={{fontFamily: 'Arial', fontSize:"12px"}}>{dataTasks.length} {dataTasks.length === 1 ? "Item" : "Items"} </p>
-					</div>
-				</div>
-				
-			</div>
+			{
+				tasksList.map((item) =>{
+					return(
+						<div key={item.id}>
+							<li >{item.label}</li>
+							<button onClick={() => deleteTask(item.id)}>X</button>
+						</div>
+						
+					)
+				})
+			}
+			</ul>
 		</div>
-	);
-};
+	)
+}
 
-// onBlur={() => editarTareas(task.id, task.label)}
-export default Home;
+export default Home
