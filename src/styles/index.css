@@ -1,3 +1,18 @@
+button{
+    background-color: #74547e;
+    color: white;
+    font-family: cursive;
+}
+
+input{
+    text-align: center;
+    font-family: cursive;
+}
+
+::placeholder{
+    font-family: cursive;
+    text-align: center;
+}
 /* .delete-btn{
     color: rgb(243, 23, 23);
  } */
